@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de Aditivo</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+<style>
+:root{
+  --primary:#0b4f7a;
+  --primary-2:#0f6aa3;
+  --primary-3:#e8f3fb;
+  --bg:#eef3f8;
+  --surface:#ffffff;
+  --surface-2:#f8fafc;
+  --border:#d5e0ea;
+  --text:#172033;
+  --muted:#64748b;
+  --success:#047857;
+  --danger:#b91c1c;
+  --warning:#b45309;
+  --shadow-sm:0 2px 8px rgba(15, 53, 87, .08);
+  --shadow:0 14px 35px rgba(15, 53, 87, .12);
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(circle at 0 0, rgba(15,106,163,.13), transparent 30%),
+    radial-gradient(circle at 100% 0, rgba(11,79,122,.10), transparent 28%),
+    var(--bg);
+  color:var(--text);
+}
+header{
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:linear-gradient(135deg,#073b5e,var(--primary),var(--primary-2));
+  color:white;
+  padding:16px 26px;
+  box-shadow:0 5px 22px rgba(0,0,0,.18);
+}
+header h1{
+  margin:0;
+  font-size:18px;
+  letter-spacing:.6px;
+  text-transform:uppercase;
+}
+main{
+  max-width:1540px;
+  margin:auto;
+  padding:20px;
+}
+section{
+  background:rgba(255,255,255,.96);
+  border:1px solid rgba(213,224,234,.95);
+  border-radius:var(--radius);
+  padding:18px;
+  margin-bottom:18px;
+  box-shadow:var(--shadow-sm);
+}
+section:hover{box-shadow:var(--shadow)}
+h2{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  font-size:14px;
+  margin:0 0 16px 0;
+  color:#073b5e;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+}
+h2::before{
+  content:"";
+  width:8px;
+  height:24px;
+  border-radius:20px;
+  background:linear-gradient(180deg,var(--primary-2),var(--primary));
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  gap:13px;
+}
+label{
+  font-size:11.5px;
+  font-weight:800;
+  display:block;
+  margin-bottom:6px;
+  color:#334155;
+  letter-spacing:.2px;
+  text-transform:uppercase;
+}
+input,select,textarea,button{
+  width:100%;
+  padding:11px 12px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  font-family:Arial, Helvetica, sans-serif;
+  font-size:13px;
+}
+input,select,textarea{
+  background:#fff;
+  color:var(--text);
+  transition:.15s ease;
+}
+input[readonly]{
+  background:#f1f5f9;
+  color:#475569;
+}
+textarea{
+  min-height:88px;
+  resize:vertical;
+  line-height:1.4;
+}
+input:focus,select:focus,textarea:focus{
+  outline:3px solid rgba(15,106,163,.16);
+  border-color:var(--primary-2);
+  box-shadow:0 0 0 1px rgba(15,106,163,.12);
+}
+button{
+  border:0;
+  background:linear-gradient(135deg,var(--primary),var(--primary-2));
+  color:white;
+  font-weight:800;
+  cursor:pointer;
+  transition:.16s ease;
+  box-shadow:0 3px 10px rgba(11,79,122,.18);
+}
+button:hover{
+  filter:brightness(.98);
+  transform:translateY(-1px);
+  box-shadow:0 7px 18px rgba(11,79,122,.24);
+}
+button:active{transform:translateY(0)}
+button:disabled{opacity:.55; cursor:not-allowed; transform:none; box-shadow:none}
+button.sec{
+  background:linear-gradient(135deg,#475569,#64748b);
+}
+button.danger{
+  background:linear-gradient(135deg,#991b1b,#dc2626);
+}
+button.ok{
+  background:linear-gradient(135deg,#047857,#059669);
+}
+.botoes{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:10px;
+}
+.help-text{
+  font-size:12px;
+  line-height:1.45;
+  color:var(--muted);
+  margin:10px 0 0;
+}
+.form-note{
+  font-size:12px;
+  color:#475569;
+  padding:10px 12px;
+  background:#f8fafc;
+  border:1px dashed #cbd5e1;
+  border-radius:10px;
+  margin:10px 0 0;
+}
+.table-wrap{
+  overflow:auto;
+  border:1px solid var(--border);
+  border-radius:12px;
+  max-height:580px;
+  background:white;
+  box-shadow:inset 0 1px 0 #fff;
+}
+table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  min-width:1050px;
+}
+th,td{
+  border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  padding:8px;
+  font-size:12px;
+  vertical-align:middle;
+}
+th{
+  background:linear-gradient(#f2f8fd,#e6f1fa);
+  color:#073b5e;
+  position:sticky;
+  top:0;
+  z-index:1;
+  text-align:left;
+  white-space:nowrap;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.25px;
+}
+tbody tr:nth-child(even){background:#fbfdff}
+tbody tr:hover{background:#eef7ff}
+td input, td select{
+  border:1px solid transparent;
+  padding:9px;
+  width:100%;
+  background:white;
+  min-width:90px;
+  font-size:13px;
+  border-radius:8px;
+}
+td input:focus, td select:focus{
+  outline:2px solid var(--primary-2);
+  border-color:var(--primary-2);
+  background:#fff;
+}
+td input.num{
+  text-align:right;
+  font-family:Consolas, Arial, sans-serif;
+}
+td.desc input{
+  min-width:340px;
+}
+.totais{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:13px;
+}
+.total-box{
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(135deg,#ffffff,#edf7ff);
+  border:1px solid var(--border);
+  padding:15px;
+  border-radius:14px;
+  font-weight:800;
+  box-shadow:var(--shadow-sm);
+}
+.total-box::after{
+  content:"";
+  position:absolute;
+  right:-28px;
+  top:-28px;
+  width:80px;
+  height:80px;
+  border-radius:50%;
+  background:rgba(15,106,163,.09);
+}
+.total-box span{
+  display:block;
+  font-size:19px;
+  margin-top:6px;
+  color:#073b5e;
+}
+.alerta{
+  background:#fff7ed;
+  color:#9a3412;
+  border:1px solid #fed7aa;
+  padding:11px 12px;
+  border-radius:10px;
+  display:none;
+  white-space:pre-line;
+  margin-bottom:10px;
+}
+#previa{
+  background:white;
+  padding:32px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  box-shadow:var(--shadow-sm);
+}
+.doc-title{
+  text-align:center;
+  font-weight:bold;
+  text-transform:uppercase;
+  font-size:15px;
+  margin-bottom:16px;
+}
+.doc-p{font-size:12px;line-height:1.45;text-align:justify}
+.doc-table{
+  min-width:0;
+  width:100%;
+  margin-top:10px;
+  border-collapse:collapse;
+}
+.doc-table th,.doc-table td{
+  font-size:10px;
+  padding:4px;
+  border:1px solid #aab7c4;
+}
+.assinatura{
+  text-align:center;
+  margin-top:40px;
+  font-size:12px;
+}
+.hidden{display:none}
+.oculto{display:none!important}
+
+/* Tela inicial */
+#telaInicial{
+  min-height:calc(100vh - 58px);
+  padding:34px 18px;
+}
+.start-card{
+  max-width:1120px;
+  margin:0 auto;
+  background:rgba(255,255,255,.97);
+  border:1px solid rgba(213,224,234,.95);
+  border-radius:22px;
+  padding:26px;
+  box-shadow:var(--shadow);
+}
+.start-hero{
+  display:grid;
+  grid-template-columns:1fr minmax(260px,360px);
+  gap:22px;
+  align-items:center;
+  padding:22px;
+  border-radius:18px;
+  background:
+    linear-gradient(135deg,rgba(11,79,122,.08),rgba(15,106,163,.04)),
+    #fff;
+  border:1px solid #dbe8f3;
+  margin-bottom:22px;
+}
+.start-title{
+  margin:0 0 8px;
+  color:#073b5e;
+  text-transform:uppercase;
+  font-size:32px;
+  letter-spacing:.8px;
+}
+.start-subtitle{
+  font-size:14px;
+  color:var(--muted);
+  margin:0;
+  line-height:1.5;
+}
+.start-actions{
+  display:grid;
+  gap:10px;
+}
+.lista-aditivos{
+  display:grid;
+  gap:11px;
+  margin-top:12px;
+}
+.aditivo-card{
+  border:1px solid var(--border);
+  border-radius:15px;
+  padding:14px;
+  display:grid;
+  grid-template-columns:1fr 96px 96px;
+  gap:10px;
+  align-items:center;
+  background:#f8fafc;
+  transition:.16s ease;
+}
+.aditivo-card:hover{
+  background:#f0f8ff;
+  border-color:#aec7dd;
+  transform:translateY(-1px);
+  box-shadow:var(--shadow-sm);
+}
+.aditivo-card b{
+  color:#111827;
+  font-size:14px;
+}
+.aditivo-card small{
+  color:#6b7280;
+}
+.inline-tools{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(185px,1fr));
+  gap:11px;
+  margin-bottom:12px;
+  padding:13px;
+  border:1px solid var(--border);
+  border-radius:13px;
+  background:linear-gradient(135deg,#f8fafc,#ffffff);
+}
+.inline-tools .full{
+  grid-column:1/-1;
+  font-size:12px;
+  color:#4b5563;
+}
+.popup-bg{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.46);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+  padding:16px;
+}
+.popup-box{
+  background:white;
+  width:min(440px,94vw);
+  border-radius:18px;
+  padding:22px;
+  border:1px solid var(--border);
+  box-shadow:0 22px 55px rgba(0,0,0,.30);
+}
+.popup-box h3{
+  margin:0 0 10px;
+  color:var(--primary);
+  font-size:18px;
+}
+.popup-box p{
+  font-size:13px;
+  line-height:1.45;
+}
+.popup-box input{
+  margin-top:4px;
+}
+.popup-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:14px;
+}
+.topbar-app{
+  max-width:1540px;
+  margin:0 auto 16px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px;
+  align-items:center;
+}
+.badge{
+  display:inline-block;
+  padding:7px 11px;
+  background:#eaf3fb;
+  color:#073b5e;
+  border:1px solid #cfe0f2;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+}
+.app-shell{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:0;
+}
+@media(max-width:800px){
+  header{padding:14px 16px}
+  main{padding:12px}
+  section{padding:14px}
+  .start-card{padding:16px;border-radius:16px}
+  .start-hero{grid-template-columns:1fr;padding:16px}
+  .start-title{font-size:24px}
+  .aditivo-card{grid-template-columns:1fr}
+  .topbar-app{grid-template-columns:1fr}
+}
+@media print{
+  body{background:white}
+  header, .no-print, #telaInicial{display:none!important}
+  main{padding:0;max-width:none}
+  section{border:0;margin:0;padding:0;box-shadow:none}
+  #previa{border:0;padding:0;box-shadow:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Gerador Simples de Proposta de Aditivo</h1>
+</header>
+
+<div id="popupOrgao" class="popup-bg">
+  <div class="popup-box">
+    <h3>Salvar órgão contratante?</h3>
+    <p>Deseja salvar este órgão contratante para reutilizar automaticamente nos próximos documentos?</p>
+    <p><b id="textoOrgaoPopup"></b></p>
+    <div class="popup-actions">
+      <button type="button" onclick="confirmarSalvarOrgao()">Salvar</button>
+      <button type="button" class="sec" onclick="fecharPopupOrgao()">Não salvar</button>
+    </div>
+  </div>
+</div>
+
+
+
+<div id="popupCpfCadastro" class="popup-bg">
+  <div class="popup-box">
+    <h3>Cadastrar CPF</h3>
+    <p>Este CPF ainda não possui nome salvo neste navegador. Informe o nome da contratada/proponente para reutilizar depois.</p>
+    <label>CPF</label>
+    <input id="cpfCadastroDoc" readonly>
+    <label style="margin-top:8px">Nome da pessoa física</label>
+    <input id="cpfCadastroNome" placeholder="Nome completo">
+    <div class="popup-actions">
+      <button type="button" onclick="salvarCadastroCpf()">Salvar cadastro</button>
+      <button type="button" class="sec" onclick="fecharPopupCpfCadastro()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="telaInicial">
+  <div class="start-card">
+    <div class="start-hero">
+      <div>
+        <h1 class="start-title">Aditivos</h1>
+        <p class="start-subtitle">Crie, salve e reabra propostas de aditivos separadamente. Cada processo fica arquivado no próprio navegador e pode ser exportado em backup.</p>
+      </div>
+      <div class="start-actions">
+        <button type="button" onclick="novoAditivo()">+ Novo aditivo</button>
+        <button type="button" class="sec" onclick="importarBackupPelaTelaInicial()">Importar backup</button>
+      </div>
+    </div>
+    <h2 style="margin-top:18px">Aditivos salvos</h2>
+    <div id="listaAditivos" class="lista-aditivos"></div>
+  </div>
+</div>
+
+<main id="appPrincipal" class="oculto">
+  <div class="topbar-app no-print">
+    <div>
+      <span class="badge">Editor de aditivo</span>
+      <span class="badge" style="margin-left:6px;background:#f8fafc;color:#475569">Salve antes de sair</span>
+    </div>
+    <button type="button" class="sec" onclick="voltarTelaInicial()">Voltar ao início</button>
+  </div>
+  <section class="no-print">
+    <h2>Dados gerais</h2>
+    <div class="grid">
+      <div><label>Tipo de aditivo</label><select id="tipo" onchange="atualizarTabela()"><option value="realinhamento">Realinhamento</option><option value="quantitativo">Quantitativo</option></select></div>
+      <div>
+        <label>Modalidade</label>
+        <select id="modalidade" onchange="montarLicitacao(); aplicarLimiteModalidade(); calcular()">
+          <option value="Pregão Eletrônico">Pregão Eletrônico</option>
+          <option value="Inexigibilidade">Inexigibilidade</option>
+          <option value="Dispensa por Valor">Dispensa por Valor</option>
+          <option value="Dispensa por Outros Motivos">Dispensa por Outros Motivos</option>
+          <option value="Concorrência Eletrônica">Concorrência Eletrônica</option>
+        </select>
+      </div>
+      <div>
+        <label>Número</label>
+        <input id="numeroLicitacao" placeholder="00032" maxlength="5" oninput="formatarNumeroLicitacao(); montarLicitacao()">
+      </div>
+      <div>
+        <label>Ano</label>
+        <input id="anoLicitacao" placeholder="2025" maxlength="4" oninput="formatarAnoLicitacao(); montarLicitacao()">
+      </div>
+      <input type="hidden" id="licitacao">
+      <div>
+        <label>Órgão contratante</label>
+        <input id="orgao" placeholder="Prefeitura Municipal de..." onblur="verificarSalvarOrgaoPopup()">
+      </div>
+      <div><label>Contratada / Proponente</label><input id="proponente" readonly placeholder="Preenchido automaticamente após consultar CPF/CNPJ"></div>
+      <div>
+        <label>CPF/CNPJ</label>
+        <input id="cnpj" placeholder="000.000.000-00 ou 00.000.000/0000-00" oninput="mascararCpfCnpj(this)">
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button type="button" class="sec" onclick="consultarCpfCnpj()">Consultar CPF ou CNPJ</button>
+      </div>
+      <div style="font-size:12px;color:#4b5563;align-self:end">
+        CNPJ consulta a base pública. CPF usa cadastro local salvo neste navegador.
+      </div>
+      <div><label>Valor atual do contrato</label><input id="valorAtual" oninput="calcular()" placeholder="0,00"></div>
+      <div><label>Limite % quantitativo</label><input id="limite" value="25" readonly title="Definido automaticamente pela modalidade"></div>
+      <div><label>Data</label><input id="data" type="date"></div>
+    </div>
+    <div style="margin-top:10px">
+      <label>Objeto</label>
+      <textarea id="objeto"></textarea>
+    </div>
+
+    <input type="hidden" id="contrato">
+    <input type="hidden" id="municipio">
+    <input type="hidden" id="email">
+    <input type="hidden" id="valorOriginal">
+    <input type="hidden" id="representante">
+    <input type="hidden" id="aditivoAtualId">
+    <p class="form-note">
+      Limite quantitativo fixo: Pregão Eletrônico = 25%; Concorrência Eletrônica = 50%.
+    </p>
+  </section>
+
+  <section class="no-print">
+    <h2>Importação da planilha</h2>
+    <div class="grid">
+      <div><label>Arquivo Excel</label><input type="file" id="excelFile" accept=".xlsx,.xls" onchange="lerExcel(event)"></div>
+      <div><label>Aba da planilha</label><select id="aba" onchange="prepararColunas()"></select></div>
+      <div><label>Linha inicial / linha do cabeçalho</label><input id="linhaInicial" type="number" value="1" min="1" onchange="prepararColunas()"></div>
+      <div><label>Linha final</label><input id="linhaFinal" type="number" min="1"></div>
+      <div><label>A linha inicial contém cabeçalho?</label><select id="temCabecalho" onchange="prepararColunas()"><option value="sim">Sim</option><option value="nao">Não</option></select></div>
+      <div><label>&nbsp;</label><button type="button" class="sec" onclick="prepararColunas()">Atualizar colunas</button></div>
+    </div>
+    <p class="help-text">
+      Se a planilha tiver título, cabeçalho ou textos antes da tabela, informe em “Linha inicial” a linha exata onde estão os cabeçalhos da tabela. Exemplo: se ITEM, DESCRIÇÃO e PREÇO começam na linha 8, coloque 8.
+    </p>
+    <div id="mapaColunas" class="grid" style="margin-top:12px"></div>
+    <div style="margin-top:12px" class="botoes">
+      <button onclick="montarTabela()">Montar tabela</button>
+      <button class="sec" onclick="adicionarLinha()">Adicionar linha</button>
+      <button class="danger" onclick="limparTudo()">Limpar</button>
+    </div>
+  </section>
+
+  <section class="no-print">
+    <h2>Itens do aditivo</h2>
+
+    <div class="inline-tools">
+      <div>
+        <label>Aplicar mesmo percentual a todos os itens</label>
+        <input id="percentualGlobal" placeholder="Ex.: 10%">
+      </div>
+      <div>
+        <label>Tipo de alteração</label>
+        <select id="tipoGlobal">
+          <option value="acrescimo">Acréscimo</option>
+          <option value="reducao">Redução</option>
+        </select>
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button type="button" onclick="aplicarPercentualTodos()">Aplicar percentual</button>
+      </div>
+      <div class="full">Disponível para aditivo quantitativo. Exemplo: ao informar 25%, todos os itens receberão esse percentual no campo “QTD OU % DO ADITIVO”.</div>
+    </div>
+
+    <div class="botoes" style="margin-bottom:10px">
+      <button class="sec" onclick="excluirLinhaSelecionada()">Excluir linha selecionada</button>
+      <button class="sec" onclick="excluirColuna()">Excluir coluna</button>
+      <button class="sec" onclick="ocultarColuna()">Ocultar coluna</button>
+      <button class="sec" onclick="restaurarColunas()">Restaurar colunas</button>
+    </div>
+    <p class="help-text">Digite valores com vírgula ou ponto. No aditivo quantitativo, informe “10” para quantidade absoluta ou “10%” para percentual. A tabela só reorganiza os cálculos quando sair do campo.</p>
+    <div id="alertas" class="alerta"></div>
+    <div class="table-wrap">
+      <table id="tabelaItens"></table>
+    </div>
+  </section>
+
+  <section class="no-print">
+    <h2>Resumo financeiro</h2>
+    <div class="totais">
+      <div class="total-box">Acréscimos: <span id="totalAcrescimos">R$ 0,00</span></div>
+      <div class="total-box">Reduções: <span id="totalReducoes">R$ 0,00</span></div>
+      <div class="total-box">Saldo do aditivo: <span id="saldoAditivo">R$ 0,00</span></div>
+      <div class="total-box">Novo valor contratual: <span id="novoValor">R$ 0,00</span></div>
+      <div class="total-box">% sobre contrato: <span id="percentualContrato">0,00%</span></div>
+    </div>
+  </section>
+
+  <section class="no-print">
+    <h2>Documento e backup</h2>
+    <label>Texto introdutório</label>
+    <textarea id="textoIntro"></textarea>
+    <label style="margin-top:10px">Texto conclusivo</label>
+    <textarea id="textoConclusivo"></textarea>
+    <div class="botoes" style="margin-top:12px">
+      <button onclick="salvarAditivoAtual()">Salvar aditivo</button>
+      <button onclick="gerarPrevia()">Gerar prévia</button>
+      <button onclick="gerarDOCX()">Gerar DOCX</button>
+      <button onclick="window.print()">Imprimir / PDF</button>
+      <button type="button" class="sec" onclick="voltarTelaInicial()">Voltar ao início</button>
+      <button type="button" class="sec" onclick="exportarBackup()">Exportar backup</button>
+      <button type="button" class="sec" onclick="document.getElementById('backupFile').click()">Importar backup</button>
+      <input type="file" id="backupFile" accept=".json" style="display:none" onchange="importarBackup(event)">
+    </div>
+  </section>
+
+  <section id="secPrevia">
+    <h2 class="no-print">Prévia</h2>
+    <div id="previa"></div>
+  </section>
+</main>
+
+<script>
+let workbook = null;
+let linhasExcel = [];
+let headersExcel = [];
+let dados = [];
+let colunasOcultas = new Set();
+
+const camposBase = ["item","descricao","marca","unidade","quantidade","precoInicial"];
+
+const nomes = {
+  item:"ITEM",
+  descricao:"DESCRIÇÃO",
+  marca:"MARCA",
+  unidade:"UNIDADE",
+  quantidade:"QUANTIDADE / QUANT. RESTANTE",
+  precoInicial:"PREÇO UNITÁRIO / PREÇO INICIAL"
+};
+
+function formatarNumeroLicitacao(){
+  const campo = document.getElementById("numeroLicitacao");
+  if(!campo) return;
+  campo.value = campo.value.replace(/\D/g,"").slice(0,5);
+}
+
+function formatarAnoLicitacao(){
+  const campo = document.getElementById("anoLicitacao");
+  if(!campo) return;
+  campo.value = campo.value.replace(/\D/g,"").slice(0,4);
+}
+
+function montarLicitacao(){
+  const modalidade = document.getElementById("modalidade")?.value || "";
+  const numero = document.getElementById("numeroLicitacao")?.value || "";
+  const ano = document.getElementById("anoLicitacao")?.value || "";
+  const campo = document.getElementById("licitacao");
+
+  let numeroAno = "";
+  if(numero.trim() && ano.trim()){
+    numeroAno = `${numero.trim()}/${ano.trim()}`;
+  } else if(numero.trim()){
+    numeroAno = numero.trim();
+  } else if(ano.trim()){
+    numeroAno = ano.trim();
+  }
+
+  if(campo){
+    campo.value = numeroAno ? `${modalidade} nº ${numeroAno}` : modalidade;
+  }
+}
+
+
+function apenasDigitos(v){
+  return String(v || "").replace(/\D/g,"");
+}
+
+function mascararCpfCnpj(input){
+  let v = apenasDigitos(input.value);
+
+  const prop = document.getElementById("proponente");
+  if(prop) prop.value = "";
+
+  if(v.length <= 11){
+    v = v.slice(0,11);
+    v = v.replace(/^(\d{3})(\d)/, "$1.$2");
+    v = v.replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3");
+    v = v.replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3-$4");
+  } else {
+    v = v.slice(0,14);
+    v = v.replace(/^(\d{2})(\d)/, "$1.$2");
+    v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+    v = v.replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3/$4");
+    v = v.replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, "$1.$2.$3/$4-$5");
+  }
+
+  input.value = v;
+}
+
+function chaveCpf(doc){
+  return "cadastroCpf_" + apenasDigitos(doc);
+}
+
+function consultarCpfLocal(doc){
+  const cpf = apenasDigitos(doc);
+  const salvo = localStorage.getItem(chaveCpf(cpf));
+
+  if(salvo){
+    document.getElementById("proponente").value = salvo;
+    alert("CPF localizado no cadastro salvo deste navegador.");
+    return;
+  }
+
+  document.getElementById("proponente").value = "";
+  document.getElementById("cpfCadastroDoc").value = cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+  document.getElementById("cpfCadastroNome").value = "";
+  document.getElementById("popupCpfCadastro").style.display = "flex";
+}
+
+function salvarCadastroCpf(){
+  const cpf = apenasDigitos(document.getElementById("cpfCadastroDoc").value);
+  const nome = document.getElementById("cpfCadastroNome").value.trim();
+
+  if(cpf.length !== 11){
+    alert("CPF inválido.");
+    return;
+  }
+
+  if(!nome){
+    alert("Informe o nome da pessoa física.");
+    return;
+  }
+
+  localStorage.setItem(chaveCpf(cpf), nome);
+  document.getElementById("proponente").value = nome;
+  fecharPopupCpfCadastro();
+  alert("CPF cadastrado neste navegador.");
+}
+
+function fecharPopupCpfCadastro(){
+  document.getElementById("popupCpfCadastro").style.display = "none";
+}
+
+async function consultarCpfCnpj(){
+  const campo = document.getElementById("cnpj");
+  const doc = apenasDigitos(campo.value);
+
+  if(doc.length === 11){
+    consultarCpfLocal(doc);
+    return;
+  }
+
+  if(doc.length !== 14){
+    alert("Informe um CPF com 11 dígitos ou um CNPJ com 14 dígitos. CNPJ será consultado online; CPF será buscado no cadastro local.");
+    return;
+  }
+
+  try{
+    const btns = document.querySelectorAll("button");
+    btns.forEach(b => b.disabled = true);
+
+    const resp = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${doc}`);
+    if(!resp.ok) throw new Error("CNPJ não localizado ou serviço indisponível.");
+
+    const data = await resp.json();
+
+    const razao = data.razao_social || data.nome_fantasia || "";
+    if(razao){
+      document.getElementById("proponente").value = razao;
+    }
+
+    const cnpjFormatado = doc.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+    campo.value = cnpjFormatado;
+
+    alert("Dados do CNPJ importados com sucesso.");
+  }catch(e){
+    alert("Não foi possível consultar o CPF/CNPJ. Para CPF, preencha manualmente. Para CNPJ, verifique a internet, o número informado ou preencha os dados manualmente.");
+  }finally{
+    document.querySelectorAll("button").forEach(b => b.disabled = false);
+  }
+}
+
+let orgaoPendenteSalvar = "";
+
+function verificarSalvarOrgaoPopup(){
+  const orgao = document.getElementById("orgao")?.value?.trim() || "";
+  const salvo = localStorage.getItem("orgaoContratantePadrao") || "";
+
+  if(!orgao || orgao === salvo) return;
+
+  orgaoPendenteSalvar = orgao;
+  document.getElementById("textoOrgaoPopup").textContent = orgao;
+  document.getElementById("popupOrgao").style.display = "flex";
+}
+
+function confirmarSalvarOrgao(){
+  if(orgaoPendenteSalvar){
+    localStorage.setItem("orgaoContratantePadrao", orgaoPendenteSalvar);
+  }
+  fecharPopupOrgao();
+}
+
+function fecharPopupOrgao(){
+  document.getElementById("popupOrgao").style.display = "none";
+  orgaoPendenteSalvar = "";
+}
+
+function carregarOrgaoSalvoAutomaticamente(){
+  const orgao = localStorage.getItem("orgaoContratantePadrao") || "";
+  if(orgao && !document.getElementById("orgao").value){
+    document.getElementById("orgao").value = orgao;
+  }
+}
+
+
+function aplicarLimiteModalidade(){
+  const modalidade = document.getElementById("modalidade")?.value || "";
+  const limite = document.getElementById("limite");
+  if(!limite) return;
+
+  // Regra fixa solicitada:
+  // Pregão Eletrônico = 25%
+  // Concorrência Eletrônica = 50%
+  // Demais modalidades permanecem com 25% como padrão.
+  if(modalidade === "Concorrência Eletrônica"){
+    limite.value = "50";
+  } else {
+    limite.value = "25";
+  }
+}
+
+function moeda(n){
+  n = Number(n || 0);
+  return n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
+function numeroBR(n){
+  n = Number(n || 0);
+  return n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function quantidadeBR(v){
+  if(v === null || v === undefined || v === "") return "";
+  const n = parseNum(v);
+  if(!Number.isFinite(n)) return "";
+
+  // Quantidade não é moeda: não força duas casas decimais.
+  // Ex.: 5000 permanece 5000; 3157.5 vira 3157,5.
+  return n.toLocaleString("pt-BR",{
+    minimumFractionDigits:0,
+    maximumFractionDigits:4
+  });
+}
+function parseNum(v){
+  if(v === null || v === undefined) return 0;
+  if(typeof v === "number") return v;
+  let s = String(v).trim();
+  if(!s) return 0;
+
+  s = s.replace(/R\$/gi,"").replace(/\s/g,"");
+
+  // Aceita formatos: 4,95 | 4.95 | 1.234,56 | 1,234.56
+  const hasComma = s.includes(",");
+  const hasDot = s.includes(".");
+
+  if(hasComma && hasDot){
+    // O último separador indica a casa decimal.
+    if(s.lastIndexOf(",") > s.lastIndexOf(".")){
+      s = s.replace(/\./g,"").replace(",",".");
+    } else {
+      s = s.replace(/,/g,"");
+    }
+  } else if(hasComma){
+    s = s.replace(",",".");
+  } else if(hasDot){
+    // Mantém ponto como decimal. Não remove, para evitar transformar 4.95 em 495.
+    s = s;
+  }
+
+  s = s.replace(/[^0-9.\-]/g,"");
+  let n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+function displayNum(v, casas=2){
+  if(v === null || v === undefined || v === "") return "";
+  const n = parseNum(v);
+  return Number.isFinite(n) ? String(v).replace(".", ",") : "";
+}
+
+function displayCalc(v, casas=2){
+  if(v === null || v === undefined || v === "") return "";
+  return numeroBR(v);
+}
+
+function round2(n){
+  n = Number(n || 0);
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+function isPercentual(v){
+  return String(v ?? "").includes("%");
+}
+
+function valor(id){return document.getElementById(id).value || ""}
+
+function lerExcel(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    const data = new Uint8Array(evt.target.result);
+    workbook = XLSX.read(data,{type:"array"});
+    const aba = document.getElementById("aba");
+    aba.innerHTML = "";
+    workbook.SheetNames.forEach(n=>{
+      const op = document.createElement("option");
+      op.value = n; op.textContent = n; aba.appendChild(op);
+    });
+    prepararColunas();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function prepararColunas(){
+  if(!workbook) return;
+  const ws = workbook.Sheets[document.getElementById("aba").value];
+  linhasExcel = XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
+  document.getElementById("linhaFinal").value = document.getElementById("linhaFinal").value || (linhasExcel.length || 1);
+
+  const ini = Math.max(1, parseInt(valor("linhaInicial") || "1"));
+  const headerIndex = ini - 1;
+  const temCab = valor("temCabecalho") === "sim";
+
+  let maior = 0;
+  linhasExcel.forEach(r => { if((r||[]).length > maior) maior = r.length; });
+
+  const linhaBase = temCab ? (linhasExcel[headerIndex] || []) : [];
+  headersExcel = Array.from({length: maior}, (_,i)=>{
+    const letra = XLSX.utils.encode_col(i);
+    const nome = temCab ? String(linhaBase[i] || "").trim() : "";
+    return nome ? nome : `COLUNA ${letra}`;
+  });
+
+  const mapa = document.getElementById("mapaColunas");
+  mapa.innerHTML = "";
+  camposBase.forEach(c=>{
+    const div = document.createElement("div");
+    div.innerHTML = `<label>${nomes[c]}</label><select id="map_${c}"><option value="">Não importar</option></select>`;
+    mapa.appendChild(div);
+    const sel = div.querySelector("select");
+    headersExcel.forEach((h,i)=>{
+      const op = document.createElement("option");
+      op.value = i;
+      op.textContent = `${XLSX.utils.encode_col(i)} - ${h}`;
+      sel.appendChild(op);
+    });
+
+    const candidatos = {
+      item:["item","nº","n°","numero","número","cod","codigo","código"],
+      descricao:["descricao","descrição","discriminacao","discriminação","objeto","produto","item descricao"],
+      marca:["marca"],
+      unidade:["unid","unidade","und","medida"],
+      quantidade:["quant","quantidade","qtd","qtde","quant contratada","quantidade contratada"],
+      quantidadeRestante:["quant restante","quantidade restante","saldo","saldo quantidade","qtd restante"],
+      precoInicial:["preco inicial","preço inicial","valor inicial","preco contratado","preço contratado","preco unitario","preço unitário"],
+      precoUnitario:["preco unitario","preço unitário","valor unitario","valor unitário","preco contratado","preço contratado"]
+    }[c] || [c];
+
+    let achou = -1;
+    for(let i=0;i<headersExcel.length;i++){
+      const hnorm = normal(headersExcel[i]);
+      if(candidatos.some(x=>hnorm.includes(normal(x)))) { achou = i; break; }
+    }
+    if(achou >= 0) sel.value = achou;
+  });
+}
+
+function normal(s){
+  return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
+}
+
+function montarTabela(){
+  if(!linhasExcel.length) return;
+  dados = [];
+
+  const ini = Math.max(1, parseInt(valor("linhaInicial") || "1"));
+  const fim = Math.min(linhasExcel.length, parseInt(valor("linhaFinal") || linhasExcel.length));
+  const cab = valor("temCabecalho") === "sim";
+
+  // Índices internos do JS são base zero.
+  // Se a linha inicial for cabeçalho, a leitura dos itens começa na linha seguinte.
+  // Se não for cabeçalho, a leitura começa na própria linha inicial.
+  const startRow = cab ? ini : ini - 1;
+
+  for(let r=startRow; r<fim; r++){
+    const row = linhasExcel[r] || [];
+    if(row.every(x=>String(x).trim()==="")) continue;
+
+    let obj = baseObj();
+    camposBase.forEach(c=>{
+      const idx = document.getElementById("map_"+c)?.value;
+      if(idx !== "") obj[c] = row[Number(idx)] ?? "";
+    });
+
+    // Site simplificado: a mesma coluna de quantidade/preço alimenta os dois tipos de aditivo.
+    obj.quantidadeRestante = obj.quantidade;
+    obj.precoUnitario = obj.precoInicial;
+
+    // Só adiciona se tiver pelo menos item, descrição, quantidade ou preço.
+    const temConteudo = [obj.item,obj.descricao,obj.quantidade,obj.quantidadeRestante,obj.precoInicial,obj.precoUnitario]
+      .some(x => String(x ?? "").trim() !== "");
+    if(temConteudo) dados.push(obj);
+  }
+
+  if(!dados.length){
+    alert("Nenhum item foi importado. Verifique se a linha inicial corresponde ao cabeçalho ou à primeira linha dos itens e se as colunas foram selecionadas corretamente.");
+  }
+
+  atualizarTabela();
+}
+
+function baseObj(){
+  return {
+    item:"",descricao:"",marca:"",unidade:"",
+    quantidade:"",quantidadeRestante:"",
+    precoInicial:"",precoUnitario:"",
+    precoAtualizado:"",
+    valorDiferenca:"",
+    tipoAlteracao:"acrescimo",
+    formaLancamento:"absoluto",
+    quantidadeInformada:"",
+    percentual:"",
+    quantidadeAditivo:0,
+    quantidadeFinal:0,
+    valorAditivo:0,
+    valorFinalItem:0,
+    subtotal:0
+  };
+}
+
+function atualizarTabela(){
+  const tipo = valor("tipo");
+  atualizarTextosPadrao();
+  const t = document.getElementById("tabelaItens");
+  let cols = tipo === "realinhamento"
+    ? ["sel","item","descricao","unidade","quantidadeRestante","precoInicial","precoAtualizado","valorDiferenca","subtotal","acao"]
+    : ["sel","item","descricao","unidade","quantidade","precoUnitario","tipoAlteracao","quantidadeInformada","quantidadeAditivo","quantidadeFinal","valorAditivo","acao"];
+
+  cols = cols.filter(c=>!colunasOcultas.has(c));
+  t.innerHTML = "";
+  const thead = document.createElement("thead");
+  const trh = document.createElement("tr");
+  cols.forEach(c=>{
+    const th = document.createElement("th");
+    th.textContent = tituloCol(c);
+    trh.appendChild(th);
+  });
+  thead.appendChild(trh);
+  t.appendChild(thead);
+
+  const tb = document.createElement("tbody");
+  dados.forEach((d,i)=>{
+    const tr = document.createElement("tr");
+    cols.forEach(c=>{
+      const td = document.createElement("td");
+      if(c==="sel") td.innerHTML = `<input type="checkbox" data-sel="${i}">`;
+      else if(c==="acao") td.innerHTML = `<button class="danger" onclick="excluirLinha(${i})">Excluir</button>`;
+      else if(c==="tipoAlteracao") td.innerHTML = `<select onchange="setDado(${i},'${c}',this.value,true)"><option value="acrescimo"${d[c]==='acrescimo'?' selected':''}>Acréscimo</option><option value="reducao"${d[c]==='reducao'?' selected':''}>Redução</option></select>`;
+      else if(c==="formaLancamento") td.innerHTML = `<span>${d[c]==='percentual'?'Percentual':'Absoluto'}</span>`;
+      else if(["subtotal","quantidadeAditivo","quantidadeFinal","valorAditivo","valorFinalItem"].includes(c)) td.textContent = c.toLowerCase().includes("valor") || c==="subtotal" ? moeda(d[c]) : quantidadeBR(d[c]);
+      else {
+        const isNum = ["quantidade","quantidadeRestante","precoInicial","precoUnitario","precoAtualizado","valorDiferenca","quantidadeInformada","percentual"].includes(c);
+        if(c==="descricao") td.classList.add("desc");
+        const stepAttr = ["precoInicial","precoUnitario","precoAtualizado","valorDiferenca"].includes(c) ? ' step="0.01"' : '';
+        td.innerHTML = `<input class="${isNum?'num':''}" inputmode="decimal"${stepAttr} value="${escapeHtml(d[c] ?? "")}" oninput="setDado(${i},'${c}',this.value,false)" onblur="setDadoBlur(${i},'${c}',this)">`;
+      }
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);
+  calcular();
+}
+
+function tituloCol(c){
+  const map = {
+    sel:"", item:"ITEM", descricao:"DISCRIMINAÇÃO", marca:"MARCA", unidade:"UNID.",
+    quantidade:"QUANTIDADE", quantidadeRestante:"QUANT. RESTANTE",
+    precoInicial:"PREÇO INICIAL", precoUnitario:"PREÇO UNITÁRIO",
+    precoAtualizado:"PREÇO ATUALIZADO", valorDiferenca:"VALOR +/-",
+    subtotal:"SUBTOTAL", tipoAlteracao:"TIPO", formaLancamento:"FORMA",
+    quantidadeInformada:"QTD OU % DO ADITIVO", percentual:"%",
+    quantidadeAditivo:"QTD ADITIVO", quantidadeFinal:"QTD FINAL",
+    valorAditivo:"VALOR ADITIVO", valorFinalItem:"VALOR FINAL ITEM",
+    acao:"AÇÃO"
+  };
+  return map[c] || c.toUpperCase();
+}
+
+function setDado(i,c,v, rerender=false){
+  dados[i][c] = v;
+  if(c === "quantidade") dados[i].quantidadeRestante = v;
+  if(c === "quantidadeRestante") dados[i].quantidade = v;
+  if(c === "precoInicial") dados[i].precoUnitario = v;
+  if(c === "precoUnitario") dados[i].precoInicial = v;
+  dados[i]._editando = c;
+  calcular();
+  if(rerender) atualizarTabela();
+}
+
+
+function setDadoBlur(i,c,el){
+  dados[i]._editando = c;
+  if(["precoInicial","precoUnitario","precoAtualizado","valorDiferenca"].includes(c) && String(el.value).trim() !== ""){
+    dados[i][c] = round2(parseNum(el.value)).toFixed(2).replace(".", ",");
+  } else if(["quantidade","quantidadeRestante","percentual"].includes(c) && String(el.value).trim() !== ""){
+    dados[i][c] = quantidadeBR(el.value);
+  } else if(c === "quantidadeInformada" && String(el.value).trim() !== ""){
+    dados[i][c] = String(el.value).trim();
+  } else {
+    dados[i][c] = el.value;
+  }
+  if(c === "quantidade") dados[i].quantidadeRestante = dados[i][c];
+  if(c === "quantidadeRestante") dados[i].quantidade = dados[i][c];
+  if(c === "precoInicial") dados[i].precoUnitario = dados[i][c];
+  if(c === "precoUnitario") dados[i].precoInicial = dados[i][c];
+
+  calcular();
+  dados[i]._editando = "";
+  atualizarTabela();
+}
+
+
+function calcular(){
+  const tipo = valor("tipo");
+  let acres = 0, red = 0;
+  let alertas = [];
+  const limite = parseNum(valor("limite"));
+  const valorAtual = parseNum(valor("valorAtual"));
+  const valorOriginal = parseNum(valor("valorOriginal")) || valorAtual;
+
+  dados.forEach((d,idx)=>{
+    if(tipo === "realinhamento"){
+      const q = parseNum(d.quantidadeRestante);
+      const pi = parseNum(d.precoInicial);
+      let pa = parseNum(d.precoAtualizado);
+      let dif = parseNum(d.valorDiferenca);
+
+      const editando = d._editando || "";
+      const temPrecoAtualizado = String(d.precoAtualizado ?? "").trim() !== "";
+      const temDiferenca = String(d.valorDiferenca ?? "").trim() !== "";
+
+      if(editando === "valorDiferenca"){
+        dif = round2(dif);
+        pa = round2(pi + dif);
+        d.precoAtualizado = pa.toFixed(2).replace(".", ",");
+      } else if(editando === "precoAtualizado"){
+        dif = round2(pa - pi);
+        d.valorDiferenca = dif.toFixed(2).replace(".", ",");
+      } else if(temDiferenca && !temPrecoAtualizado){
+        dif = round2(dif);
+        pa = round2(pi + dif);
+        d.precoAtualizado = pa.toFixed(2).replace(".", ",");
+      } else if(temPrecoAtualizado){
+        dif = round2(pa - pi);
+        d.valorDiferenca = dif.toFixed(2).replace(".", ",");
+      } else {
+        dif = 0;
+      }
+
+      d.subtotal = round2(q * dif);
+      if(d.subtotal >= 0) acres += d.subtotal; else red += d.subtotal;
+      if(!q) alertas.push(`Item ${idx+1}: sem quantidade restante.`);
+      if(!pi) alertas.push(`Item ${idx+1}: sem preço inicial.`);
+    } else {
+      const q = parseNum(d.quantidade);
+      const p = parseNum(d.precoUnitario);
+      let qtdAd = 0;
+      const entrada = String(d.quantidadeInformada ?? "").trim();
+
+      // Identificação automática:
+      // se o usuário digitar "%" no campo, calcula por percentual;
+      // se não digitar "%", interpreta como quantidade absoluta.
+      if(isPercentual(entrada)){
+        d.formaLancamento = "percentual";
+        const percentualAuto = parseNum(entrada.replace("%",""));
+        qtdAd = q * percentualAuto / 100;
+      } else {
+        d.formaLancamento = "absoluto";
+        qtdAd = parseNum(entrada);
+      }
+
+      const sinal = d.tipoAlteracao === "reducao" ? -1 : 1;
+      d.quantidadeAditivo = qtdAd;
+      d.quantidadeFinal = q + (sinal * qtdAd);
+      d.valorAditivo = round2(qtdAd * p * sinal);
+      d.valorFinalItem = round2(d.quantidadeFinal * p);
+
+      if(d.valorAditivo >= 0) acres += d.valorAditivo; else red += d.valorAditivo;
+      if(!q) alertas.push(`Item ${idx+1}: sem quantidade base.`);
+      if(!p) alertas.push(`Item ${idx+1}: sem preço unitário.`);
+      if(d.quantidadeFinal < 0) alertas.push(`Item ${idx+1}: quantidade final negativa.`);
+      if(d.tipoAlteracao === "reducao" && qtdAd > q) alertas.push(`Item ${idx+1}: redução maior que a quantidade disponível.`);
+      const percItem = q ? (qtdAd / q * 100) : 0;
+      if(limite && percItem > limite) alertas.push(`Item ${idx+1}: percentual do item acima do limite informado.`);
+      d.percentual = percItem;
+    }
+  });
+
+  const saldo = acres + red;
+  const novo = valorAtual + saldo;
+  const percContrato = valorOriginal ? (Math.abs(saldo) / valorOriginal * 100) : 0;
+  if(limite && percContrato > limite && tipo === "quantitativo") alertas.push(`Percentual total do aditivo acima do limite informado.`);
+
+  document.getElementById("totalAcrescimos").textContent = moeda(acres);
+  document.getElementById("totalReducoes").textContent = moeda(red);
+  document.getElementById("saldoAditivo").textContent = moeda(saldo);
+  document.getElementById("novoValor").textContent = moeda(novo);
+  document.getElementById("percentualContrato").textContent = numeroBR(percContrato)+"%";
+
+  const box = document.getElementById("alertas");
+  box.style.display = alertas.length ? "block" : "none";
+  box.textContent = alertas.join("\n");
+}
+
+
+function aplicarPercentualTodos(){
+  if(valor("tipo") !== "quantitativo"){
+    alert("Esta função é aplicável apenas ao aditivo quantitativo.");
+    return;
+  }
+
+  let percentual = String(document.getElementById("percentualGlobal").value || "").trim();
+  if(!percentual){
+    alert("Informe o percentual a ser aplicado. Exemplo: 10%.");
+    return;
+  }
+
+  percentual = percentual.replace(",", ".");
+  const numero = parseNum(percentual.replace("%",""));
+  if(!numero || numero <= 0){
+    alert("Informe um percentual válido. Exemplo: 10%.");
+    return;
+  }
+
+  percentual = String(numero).replace(".", ",") + "%";
+  const tipo = document.getElementById("tipoGlobal").value || "acrescimo";
+
+  dados.forEach(d=>{
+    d.tipoAlteracao = tipo;
+    d.quantidadeInformada = percentual;
+    d.formaLancamento = "percentual";
+  });
+
+  calcular();
+  atualizarTabela();
+}
+
+
+function adicionarLinha(){
+  dados.push(baseObj());
+  atualizarTabela();
+}
+function excluirLinha(i){
+  dados.splice(i,1);
+  atualizarTabela();
+}
+function excluirLinhaSelecionada(){
+  const checks = [...document.querySelectorAll("[data-sel]:checked")].map(x=>Number(x.dataset.sel));
+  dados = dados.filter((_,i)=>!checks.includes(i));
+  atualizarTabela();
+}
+function excluirColuna(){
+  const c = prompt("Informe o nome interno da coluna para excluir/ocultar: item, descricao, marca, unidade, quantidade, quantidadeRestante, precoInicial, precoUnitario, precoAtualizado, valorDiferenca");
+  if(c){ colunasOcultas.add(c); atualizarTabela(); }
+}
+function ocultarColuna(){ excluirColuna(); }
+function restaurarColunas(){ colunasOcultas.clear(); atualizarTabela(); }
+function limparTudo(){
+  if(confirm("Limpar todos os dados?")){
+    dados=[]; colunasOcultas.clear();
+    document.getElementById("tabelaItens").innerHTML="";
+    document.getElementById("previa").innerHTML="";
+    calcular();
+  }
+}
+
+function atualizarTextosPadrao(){
+  const tipo = valor("tipo");
+  const intro = document.getElementById("textoIntro");
+  const conc = document.getElementById("textoConclusivo");
+  if(!intro.value || intro.dataset.tipo !== tipo){
+    intro.dataset.tipo = tipo;
+    intro.value = tipo === "realinhamento"
+      ? "Apresenta-se a presente proposta atualizada para fins de aditivo de realinhamento, com a finalidade de ajustar os valores dos itens constantes do contrato, observadas as condições pactuadas, a justificativa administrativa correspondente e a documentação comprobatória pertinente.\n\nDessa forma, o presente documento tem por finalidade demonstrar os valores atualizados dos itens objeto de realinhamento, preservando-se as demais condições contratuais anteriormente firmadas, salvo aquelas expressamente alteradas por meio do respectivo termo aditivo."
+      : "Apresenta-se a presente proposta para fins de aditivo quantitativo, com a finalidade de demonstrar os acréscimos e/ou supressões necessários à adequada execução do objeto contratado, observadas as condições originalmente pactuadas, os limites legais aplicáveis e a justificativa administrativa correspondente.\n\nDessa forma, o presente documento tem por finalidade discriminar os itens, quantitativos, valores unitários e respectivos subtotais que compõem o aditivo pretendido, preservando-se as demais condições contratuais anteriormente firmadas, salvo aquelas expressamente alteradas por meio do respectivo termo aditivo.";
+  }
+  if(!conc.value || conc.dataset.tipo !== tipo){
+    conc.dataset.tipo = tipo;
+    conc.value = tipo === "realinhamento"
+      ? "Após a atualização dos valores constantes na presente proposta, verifica-se a necessidade de formalização de aditivo contratual, com a finalidade de promover o realinhamento dos preços dos itens indicados, preservando o equilíbrio econômico-financeiro da contratação.\n\nO valor atual do contrato corresponde a [VALOR DO CONTRATO]. Considerando o saldo final decorrente do presente aditivo, no importe de [VALOR DO ADITIVO], conforme demonstrado na tabela acima, o valor contratual passará a totalizar [VALOR TOTAL]."
+      : "Com base nos quantitativos indicados na presente proposta, verifica-se a necessidade de formalização de aditivo quantitativo, visando adequar a execução contratual à demanda efetivamente apurada pela Administração.\n\nO presente aditivo incide sobre os quantitativos dos itens contratados, preservando-se os respectivos preços unitários originalmente pactuados. Dessa forma, a repercussão financeira decorre exclusivamente da variação das quantidades acrescidas ou reduzidas, conforme demonstrado na tabela acima.\n\nO valor atual do contrato corresponde a [VALOR DO CONTRATO]. Considerando o saldo final do presente aditivo, no importe de [VALOR DO ADITIVO], o valor contratual passará a totalizar [VALOR TOTAL], observados os limites legais e contratuais aplicáveis.";
+  }
+}
+
+function gerarPrevia(){
+  calcular();
+  const tipo = valor("tipo");
+  const titulo = tipo === "realinhamento" ? "PROPOSTA ATUALIZADA PARA FINS DE ADITIVO DE REALINHAMENTO" : "PROPOSTA ATUALIZADA PARA FINS DE ADITIVO QUANTITATIVO";
+  const saldo = document.getElementById("saldoAditivo").textContent;
+  const novo = document.getElementById("novoValor").textContent;
+  const atual = moeda(parseNum(valor("valorAtual")));
+  let conclusivo = valor("textoConclusivo").replaceAll("[VALOR DO CONTRATO]", atual).replaceAll("[VALOR DO ADITIVO]", saldo).replaceAll("[VALOR TOTAL]", novo);
+
+  let html = `<div class="doc-title">${titulo}</div>
+  <p class="doc-p"><b>${escapeHtml(valor("licitacao"))}</b><br>
+  <b>${escapeHtml(valor("orgao"))}</b><br>
+  <b>OBJETO:</b> ${escapeHtml(valor("objeto"))}<br>
+  <b>PROPONENTE:</b> ${escapeHtml(valor("proponente"))}<br>
+  <b>CPF/CNPJ:</b> ${escapeHtml(valor("cnpj"))}</p>
+  ${textoParaHtml(valor("textoIntro"))}
+  ${tabelaPrevia()}
+  <p class="doc-p"><b>VALOR ATUAL DO CONTRATO:</b> ${atual}<br>
+  <b>VALOR TOTAL DOS ACRÉSCIMOS:</b> ${document.getElementById("totalAcrescimos").textContent}<br>
+  <b>VALOR TOTAL DAS REDUÇÕES:</b> ${document.getElementById("totalReducoes").textContent}<br>
+  <b>SALDO FINAL DO ADITIVO:</b> ${saldo}<br>
+  <b>VALOR TOTAL APÓS O ADITIVO:</b> ${novo}<br>
+  <b>PERCENTUAL SOBRE O CONTRATO:</b> ${document.getElementById("percentualContrato").textContent}</p>
+  ${textoParaHtml(conclusivo)}
+  <p class="doc-p">${escapeHtml(valor("municipio"))}, ${formatarData(valor("data"))}.</p>
+  <div class="assinatura">________________________________________<br>${escapeHtml(valor("representante"))}<br>Representante Legal</div>`;
+  document.getElementById("previa").innerHTML = html;
+}
+
+function tabelaPrevia(){
+  const tipo = valor("tipo");
+  const cols = tipo === "realinhamento"
+    ? ["item","descricao","unidade","quantidadeRestante","precoInicial","valorDiferenca","subtotal"]
+    : ["item","descricao","unidade","quantidade","precoUnitario","tipoAlteracao","quantidadeInformada","quantidadeAditivo","quantidadeFinal","valorAditivo"];
+  let h = `<table class="doc-table"><thead><tr>${cols.map(c=>`<th>${tituloCol(c)}</th>`).join("")}</tr></thead><tbody>`;
+  dados.forEach(d=>{
+    h += "<tr>" + cols.map(c=>{
+      let v = d[c] ?? "";
+      if(["precoInicial","precoUnitario","valorDiferenca","subtotal","valorAditivo"].includes(c)) v = moeda(v);
+      if(["quantidade","quantidadeRestante","quantidadeAditivo","quantidadeFinal"].includes(c)) v = quantidadeBR(v);
+      if(c==="tipoAlteracao") v = d[c]==="reducao" ? "REDUÇÃO" : "ACRÉSCIMO";
+      if(c==="formaLancamento") v = d[c]==="percentual" ? "PERCENTUAL" : "ABSOLUTO";
+      return `<td>${escapeHtml(v)}</td>`;
+    }).join("") + "</tr>";
+  });
+  h += "</tbody></table>";
+  return h;
+}
+
+function textoParaHtml(txt){
+  return String(txt||"").split(/\n+/).filter(Boolean).map(p=>`<p class="doc-p">${escapeHtml(p)}</p>`).join("");
+}
+function escapeHtml(s){
+  return String(s ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
+}
+function formatarData(d){
+  if(!d) return "";
+  const [a,m,dd] = d.split("-");
+  return `${dd}/${m}/${a}`;
+}
+
+async function gerarDOCX(){
+  try{
+    calcular();
+    gerarPrevia();
+
+    if(!window.docx){
+      alert("A biblioteca DOCX não foi carregada. Verifique a internet e recarregue a página.");
+      return;
+    }
+
+    const docxLib = window.docx;
+    const tipo = valor("tipo");
+    const titulo = tipo === "realinhamento"
+      ? "PROPOSTA ATUALIZADA PARA FINS DE ADITIVO DE REALINHAMENTO"
+      : "PROPOSTA ATUALIZADA PARA FINS DE ADITIVO QUANTITATIVO";
+
+    const children = [];
+
+    children.push(new docxLib.Paragraph({
+      alignment: docxLib.AlignmentType.CENTER,
+      spacing:{after:240},
+      children:[new docxLib.TextRun({text:limparTexto(titulo), bold:true, size:24, font:"Arial"})]
+    }));
+
+    const dadosProcesso = [
+      valor("licitacao"),
+      valor("orgao"),
+      "OBJETO: " + valor("objeto"),
+      "PROPONENTE: " + valor("proponente"),
+      "CPF/CNPJ: " + valor("cnpj")
+    ].filter(x=>String(x).trim());
+
+    dadosProcesso.forEach(x => children.push(paragrafoDocx(x, true)));
+
+    valor("textoIntro").split(/\n+/).filter(Boolean).forEach(x=>{
+      children.push(paragrafoDocx(x));
+    });
+
+    children.push(tabelaDocxSegura());
+
+    const atual = moeda(parseNum(valor("valorAtual")));
+    const saldo = document.getElementById("saldoAditivo").textContent;
+    const novo = document.getElementById("novoValor").textContent;
+
+    [
+      "VALOR ATUAL DO CONTRATO: " + atual,
+      "VALOR TOTAL DOS ACRÉSCIMOS: " + document.getElementById("totalAcrescimos").textContent,
+      "VALOR TOTAL DAS REDUÇÕES: " + document.getElementById("totalReducoes").textContent,
+      "SALDO FINAL DO ADITIVO: " + saldo,
+      "VALOR TOTAL APÓS O ADITIVO: " + novo,
+      "PERCENTUAL SOBRE O CONTRATO: " + document.getElementById("percentualContrato").textContent
+    ].forEach(x=>children.push(paragrafoDocx(x, true)));
+
+    let conclusivo = valor("textoConclusivo")
+      .replaceAll("[VALOR DO CONTRATO]", atual)
+      .replaceAll("[VALOR DO ADITIVO]", saldo)
+      .replaceAll("[VALOR TOTAL]", novo);
+
+    conclusivo.split(/\n+/).filter(Boolean).forEach(x=>{
+      children.push(paragrafoDocx(x));
+    });
+
+    children.push(paragrafoDocx(`${valor("municipio")}, ${formatarData(valor("data"))}.`));
+
+    children.push(new docxLib.Paragraph({
+      alignment:docxLib.AlignmentType.CENTER,
+      spacing:{before:500},
+      children:[new docxLib.TextRun({text:"________________________________________", font:"Arial", size:20})]
+    }));
+    children.push(new docxLib.Paragraph({
+      alignment:docxLib.AlignmentType.CENTER,
+      children:[new docxLib.TextRun({text:limparTexto(valor("representante")), font:"Arial", size:20})]
+    }));
+    children.push(new docxLib.Paragraph({
+      alignment:docxLib.AlignmentType.CENTER,
+      children:[new docxLib.TextRun({text:"Representante Legal", font:"Arial", size:20})]
+    }));
+
+    const doc = new docxLib.Document({
+      creator:"Gerador de Aditivo",
+      sections:[{
+        properties:{
+          page:{
+            margin:{top:720,right:360,bottom:720,left:360}
+          }
+        },
+        children
+      }]
+    });
+
+    const blob = await docxLib.Packer.toBlob(doc);
+
+    if(!blob || blob.size < 1000){
+      alert("O DOCX não foi gerado corretamente. Verifique se há itens na tabela.");
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "proposta-aditivo.docx";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{
+      URL.revokeObjectURL(url);
+      a.remove();
+    },1000);
+
+  }catch(e){
+    console.error(e);
+    alert("Erro ao gerar DOCX: " + (e && e.message ? e.message : e));
+  }
+}
+
+
+function limparTexto(texto){
+  return String(texto ?? "")
+    // Remove caracteres inválidos para XML/Word.
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uD800-\uDFFF\uFFFE\uFFFF]/g,"")
+    .replace(/\t/g," ")
+    .replace(/\r?\n/g," ")
+    .replace(/\s+/g," ")
+    .trim();
+}
+
+function paragrafoDocx(text, bold=false){
+  return new window.docx.Paragraph({
+    spacing:{after:140},
+    alignment:window.docx.AlignmentType.JUSTIFIED,
+    children:[new window.docx.TextRun({
+      text:limparTexto(text),
+      size:20,
+      font:"Arial",
+      bold
+    })]
+  });
+}
+
+function p(text, bold=false){
+  return paragrafoDocx(text, bold);
+}
+
+function tabelaDocxSegura(){
+  const tipo = valor("tipo");
+  const cols = tipo === "realinhamento"
+    ? ["item","descricao","unidade","quantidadeRestante","precoInicial","valorDiferenca","subtotal"]
+    : ["item","descricao","unidade","quantidade","precoUnitario","tipoAlteracao","quantidadeInformada","quantidadeAditivo","quantidadeFinal","valorAditivo"];
+
+  const border = {style:window.docx.BorderStyle.SINGLE,size:1,color:"999999"};
+  const rows = [];
+
+  rows.push(new window.docx.TableRow({
+    children:cols.map(c=>celulaDocx(tituloCol(c), true, border))
+  }));
+
+  const linhasValidas = dados.filter(d=>{
+    return [d.item,d.descricao,d.quantidade,d.quantidadeRestante,d.precoInicial,d.precoUnitario,d.valorAditivo,d.subtotal]
+      .some(x=>String(x ?? "").trim() !== "");
+  });
+
+  if(!linhasValidas.length){
+    rows.push(new window.docx.TableRow({
+      children:[celulaDocx("Nenhum item informado.", false, border)]
+    }));
+  } else {
+    linhasValidas.forEach(d=>{
+      rows.push(new window.docx.TableRow({
+        children:cols.map(c=>{
+          let v = d[c] ?? "";
+          if(["precoInicial","precoUnitario","valorDiferenca","subtotal","valorAditivo"].includes(c)) v = moeda(v);
+          if(["quantidade","quantidadeRestante","quantidadeAditivo","quantidadeFinal"].includes(c)) v = quantidadeBR(v);
+          if(c==="tipoAlteracao") v = d[c]==="reducao" ? "REDUÇÃO" : "ACRÉSCIMO";
+          return celulaDocx(String(v), false, border);
+        })
+      }));
+    });
+  }
+
+  return new window.docx.Table({
+    width:{size:100,type:window.docx.WidthType.PERCENTAGE},
+    rows
+  });
+}
+
+function tabelaDocx(){
+  return tabelaDocxSegura();
+}
+
+function docxTabela(){
+  return tabelaDocxSegura();
+}
+
+function celulaDocx(text, bold, border){
+  const txt = limparTexto(text);
+  return new window.docx.TableCell({
+    borders:{top:border,bottom:border,left:border,right:border},
+    children:[new window.docx.Paragraph({
+      children:[new window.docx.TextRun({
+        text:txt || " ",
+        bold,
+        size:12,
+        font:"Arial"
+      })]
+    })]
+  });
+}
+
+function cell(text, bold, border){
+  return celulaDocx(text, bold, border);
+}
+
+
+
+
+function getAditivosSalvos(){
+  try{
+    return JSON.parse(localStorage.getItem("aditivosSalvos") || "[]");
+  }catch(e){
+    return [];
+  }
+}
+
+function setAditivosSalvos(lista){
+  localStorage.setItem("aditivosSalvos", JSON.stringify(lista));
+}
+
+function mostrarTelaInicial(){
+  document.getElementById("telaInicial").classList.remove("oculto");
+  document.getElementById("appPrincipal").classList.add("oculto");
+  renderizarListaAditivos();
+}
+
+function mostrarApp(){
+  document.getElementById("telaInicial").classList.add("oculto");
+  document.getElementById("appPrincipal").classList.remove("oculto");
+}
+
+function novoAditivo(){
+  limparTudo();
+  document.getElementById("aditivoAtualId").value = "";
+  document.getElementById("data").valueAsDate = new Date();
+  carregarOrgaoSalvoAutomaticamente();
+  montarLicitacao();
+  aplicarLimiteModalidade();
+  atualizarTextosPadrao();
+  calcular();
+  mostrarApp();
+}
+
+function voltarTelaInicial(){
+  mostrarTelaInicial();
+}
+
+function nomeAditivoAtual(){
+  const lista = getAditivosSalvos();
+  const prox = lista.length + 1;
+  const modalidade = document.getElementById("modalidade")?.value || "";
+  const numero = document.getElementById("numeroLicitacao")?.value || "";
+  const ano = document.getElementById("anoLicitacao")?.value || "";
+  const tipo = document.getElementById("tipo")?.value === "realinhamento" ? "REALINHAMENTO" : "QUANTITATIVO";
+
+  let sigla = modalidade;
+  if(modalidade === "Pregão Eletrônico") sigla = "PE";
+  if(modalidade === "Inexigibilidade") sigla = "IN";
+  if(modalidade === "Dispensa por Valor") sigla = "DV";
+  if(modalidade === "Dispensa por Outros Motivos") sigla = "DO";
+  if(modalidade === "Concorrência Eletrônica") sigla = "CE";
+
+  const proc = numero && ano ? `${sigla} ${numero}/${ano}` : sigla;
+  return `${prox}º ADITIVO ${proc} ${tipo}`;
+}
+
+function coletarEstadoAditivo(){
+  return {
+    id: document.getElementById("aditivoAtualId").value || String(Date.now()),
+    nome: nomeAditivoAtual(),
+    atualizadoEm: new Date().toISOString(),
+    formulario: {
+      tipo: valor("tipo"),
+      modalidade: document.getElementById("modalidade")?.value || "",
+      numeroLicitacao: document.getElementById("numeroLicitacao")?.value || "",
+      anoLicitacao: document.getElementById("anoLicitacao")?.value || "",
+      licitacao: valor("licitacao"),
+      orgao: valor("orgao"),
+      proponente: valor("proponente"),
+      cnpj: valor("cnpj"),
+      valorAtual: valor("valorAtual"),
+      limite: valor("limite"),
+      data: valor("data"),
+      objeto: valor("objeto"),
+      textoIntro: valor("textoIntro"),
+      textoConclusivo: valor("textoConclusivo")
+    },
+    dados: dados,
+    colunasOcultas: Array.from(colunasOcultas)
+  };
+}
+
+function aplicarEstadoAditivo(ad){
+  if(!ad) return;
+  document.getElementById("aditivoAtualId").value = ad.id || "";
+  const f = ad.formulario || {};
+
+  if(document.getElementById("tipo")) document.getElementById("tipo").value = f.tipo || "realinhamento";
+  if(document.getElementById("modalidade")) document.getElementById("modalidade").value = f.modalidade || "Pregão Eletrônico";
+  if(document.getElementById("numeroLicitacao")) document.getElementById("numeroLicitacao").value = f.numeroLicitacao || "";
+  if(document.getElementById("anoLicitacao")) document.getElementById("anoLicitacao").value = f.anoLicitacao || "";
+  if(document.getElementById("orgao")) document.getElementById("orgao").value = f.orgao || "";
+  if(document.getElementById("proponente")) document.getElementById("proponente").value = f.proponente || "";
+  if(document.getElementById("cnpj")) document.getElementById("cnpj").value = f.cnpj || "";
+  if(document.getElementById("valorAtual")) document.getElementById("valorAtual").value = f.valorAtual || "";
+  if(document.getElementById("limite")) document.getElementById("limite").value = f.limite || "25";
+  if(document.getElementById("data")) document.getElementById("data").value = f.data || "";
+  if(document.getElementById("objeto")) document.getElementById("objeto").value = f.objeto || "";
+  if(document.getElementById("textoIntro")) document.getElementById("textoIntro").value = f.textoIntro || "";
+  if(document.getElementById("textoConclusivo")) document.getElementById("textoConclusivo").value = f.textoConclusivo || "";
+
+  dados = Array.isArray(ad.dados) ? ad.dados : [];
+  colunasOcultas = new Set(Array.isArray(ad.colunasOcultas) ? ad.colunasOcultas : []);
+
+  montarLicitacao();
+  aplicarLimiteModalidade();
+  atualizarTabela();
+  calcular();
+  gerarPrevia();
+}
+
+function salvarAditivoAtual(){
+  montarLicitacao();
+  calcular();
+
+  const ad = coletarEstadoAditivo();
+  const lista = getAditivosSalvos();
+  const idx = lista.findIndex(x => x.id === ad.id);
+
+  if(idx >= 0){
+    ad.nome = lista[idx].nome;
+    lista[idx] = ad;
+  } else {
+    lista.push(ad);
+  }
+
+  document.getElementById("aditivoAtualId").value = ad.id;
+  setAditivosSalvos(lista);
+  alert("Aditivo salvo.");
+  renderizarListaAditivos();
+}
+
+function abrirAditivo(id){
+  const lista = getAditivosSalvos();
+  const ad = lista.find(x => x.id === id);
+  if(!ad){
+    alert("Aditivo não encontrado.");
+    return;
+  }
+  aplicarEstadoAditivo(ad);
+  mostrarApp();
+}
+
+function excluirAditivo(id){
+  if(!confirm("Excluir este aditivo salvo?")) return;
+  const lista = getAditivosSalvos().filter(x => x.id !== id);
+  setAditivosSalvos(lista);
+  renderizarListaAditivos();
+}
+
+function renderizarListaAditivos(){
+  const div = document.getElementById("listaAditivos");
+  if(!div) return;
+
+  const lista = getAditivosSalvos();
+
+  if(!lista.length){
+    div.innerHTML = '<p style="font-size:13px;color:#6b7280">Nenhum aditivo salvo ainda.</p>';
+    return;
+  }
+
+  div.innerHTML = lista.map(ad=>{
+    const data = ad.atualizadoEm ? new Date(ad.atualizadoEm).toLocaleString("pt-BR") : "";
+    return `
+      <div class="aditivo-card">
+        <div>
+          <b>${escapeHtml(ad.nome || "Aditivo salvo")}</b><br>
+          <small>Atualizado em ${escapeHtml(data)}</small>
+        </div>
+        <button type="button" onclick="abrirAditivo('${escapeHtml(ad.id)}')">Abrir</button>
+        <button type="button" class="danger" onclick="excluirAditivo('${escapeHtml(ad.id)}')">Excluir</button>
+      </div>
+    `;
+  }).join("");
+}
+
+function importarBackupPelaTelaInicial(){
+  document.getElementById("backupFile").click();
+}
+
+
+function coletarCadastrosLocais(){
+  const dadosLocal = {};
+  for(let i=0; i<localStorage.length; i++){
+    const chave = localStorage.key(i);
+    if(
+      chave === "orgaoContratantePadrao" ||
+      chave.startsWith("cadastroCpf_")
+    ){
+      dadosLocal[chave] = localStorage.getItem(chave);
+    }
+  }
+  return dadosLocal;
+}
+
+function exportarBackup(){
+  try{
+    const backup = {
+      tipo: "backup-gerador-aditivo",
+      versao: 1,
+      geradoEm: new Date().toISOString(),
+      cadastros: coletarCadastrosLocais(),
+      aditivosSalvos: getAditivosSalvos(),
+      formularioAtual: {
+        modalidade: document.getElementById("modalidade")?.value || "",
+        numeroLicitacao: document.getElementById("numeroLicitacao")?.value || "",
+        anoLicitacao: document.getElementById("anoLicitacao")?.value || "",
+        orgao: document.getElementById("orgao")?.value || "",
+        proponente: document.getElementById("proponente")?.value || "",
+        cnpj: document.getElementById("cnpj")?.value || "",
+        valorAtual: document.getElementById("valorAtual")?.value || "",
+        objeto: document.getElementById("objeto")?.value || "",
+        tipoAditivo: document.getElementById("tipo")?.value || ""
+      }
+    };
+
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const data = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = `backup-gerador-aditivo-${data}.json`;
+    document.body.appendChild(a);
+    a.click();
+
+    setTimeout(()=>{
+      URL.revokeObjectURL(url);
+      a.remove();
+    }, 1000);
+  }catch(e){
+    alert("Não foi possível exportar o backup.");
+  }
+}
+
+function importarBackup(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const backup = JSON.parse(e.target.result);
+
+      if(!backup || backup.tipo !== "backup-gerador-aditivo"){
+        alert("Arquivo de backup inválido.");
+        return;
+      }
+
+      if(backup.cadastros && typeof backup.cadastros === "object"){
+        Object.entries(backup.cadastros).forEach(([chave, valor])=>{
+          if(
+            chave === "orgaoContratantePadrao" ||
+            chave.startsWith("cadastroCpf_")
+          ){
+            localStorage.setItem(chave, String(valor ?? ""));
+          }
+        });
+      }
+
+      if(Array.isArray(backup.aditivosSalvos)){
+        setAditivosSalvos(backup.aditivosSalvos);
+        renderizarListaAditivos();
+      }
+
+      if(backup.formularioAtual){
+        const f = backup.formularioAtual;
+
+        if(document.getElementById("modalidade") && f.modalidade) document.getElementById("modalidade").value = f.modalidade;
+        if(document.getElementById("numeroLicitacao")) document.getElementById("numeroLicitacao").value = f.numeroLicitacao || "";
+        if(document.getElementById("anoLicitacao")) document.getElementById("anoLicitacao").value = f.anoLicitacao || "";
+        if(document.getElementById("orgao")) document.getElementById("orgao").value = f.orgao || localStorage.getItem("orgaoContratantePadrao") || "";
+        if(document.getElementById("proponente")) document.getElementById("proponente").value = f.proponente || "";
+        if(document.getElementById("cnpj")) document.getElementById("cnpj").value = f.cnpj || "";
+        if(document.getElementById("valorAtual")) document.getElementById("valorAtual").value = f.valorAtual || "";
+        if(document.getElementById("objeto")) document.getElementById("objeto").value = f.objeto || "";
+        if(document.getElementById("tipo") && f.tipoAditivo) document.getElementById("tipo").value = f.tipoAditivo;
+      }
+
+      montarLicitacao();
+      aplicarLimiteModalidade();
+      atualizarTextosPadrao();
+      calcular();
+
+      alert("Backup importado com sucesso.");
+    }catch(err){
+      alert("Erro ao importar backup. Verifique se o arquivo é um JSON válido.");
+    }finally{
+      event.target.value = "";
+    }
+  };
+
+  reader.readAsText(file, "UTF-8");
+}
+
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  document.getElementById("data").valueAsDate = new Date();
+  carregarOrgaoSalvoAutomaticamente();
+  montarLicitacao();
+  aplicarLimiteModalidade();
+  atualizarTextosPadrao();
+  calcular();
+  mostrarTelaInicial();
+});
+</script>
+</body>
+</html>
