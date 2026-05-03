@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gerador de Aditivo</title>
+<title>Gerador de Aditivos</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <style>
 :root{
   --primary:#0b4f7a;
@@ -462,11 +461,21 @@ td.desc input{
   section{border:0;margin:0;padding:0;box-shadow:none}
   #previa{border:0;padding:0;box-shadow:none}
 }
+
+#previa[contenteditable="true"]{
+  min-height:240px;
+  outline:2px dashed transparent;
+}
+#previa[contenteditable="true"]:focus{
+  outline:2px dashed var(--primary-2);
+  background:#fffefa;
+}
+
 </style>
 </head>
 <body>
 <header>
-  <h1>Gerador Simples de Proposta de Aditivo</h1>
+  <h1>Gerador de Aditivos</h1>
 </header>
 
 <div id="popupOrgao" class="popup-bg">
@@ -565,6 +574,8 @@ td.desc input{
       <div><label>Valor atual do contrato</label><input id="valorAtual" oninput="calcular()" placeholder="0,00"></div>
       <div><label>Limite % quantitativo</label><input id="limite" value="25" readonly title="Definido automaticamente pela modalidade"></div>
       <div><label>Data</label><input id="data" type="date"></div>
+      <div><label>Local de emissão</label><input id="localEmissao" placeholder="Riacho dos Cavalos/PB"></div>
+      <div><label>Representante legal</label><input id="representante" placeholder="Nome do representante legal"></div>
     </div>
     <div style="margin-top:10px">
       <label>Objeto</label>
@@ -575,7 +586,6 @@ td.desc input{
     <input type="hidden" id="municipio">
     <input type="hidden" id="email">
     <input type="hidden" id="valorOriginal">
-    <input type="hidden" id="representante">
     <input type="hidden" id="aditivoAtualId">
     <p class="form-note">
       Limite quantitativo fixo: Pregão Eletrônico = 25%; Concorrência Eletrônica = 50%.
@@ -658,7 +668,7 @@ td.desc input{
     <div class="botoes" style="margin-top:12px">
       <button onclick="salvarAditivoAtual()">Salvar aditivo</button>
       <button onclick="gerarPrevia()">Gerar prévia</button>
-      <button onclick="gerarDOCX()">Gerar DOCX</button>
+      <button onclick="exportarTabelaExcel()">Exportar tabela Excel</button>
       <button onclick="window.print()">Imprimir / PDF</button>
       <button type="button" class="sec" onclick="voltarTelaInicial()">Voltar ao início</button>
       <button type="button" class="sec" onclick="exportarBackup()">Exportar backup</button>
@@ -668,8 +678,9 @@ td.desc input{
   </section>
 
   <section id="secPrevia">
-    <h2 class="no-print">Prévia</h2>
-    <div id="previa"></div>
+    <h2 class="no-print">Prévia editável</h2>
+    <p class="help-text no-print">Clique diretamente no texto abaixo para editar a prévia antes de imprimir ou salvar em PDF. Ao clicar em “Salvar aditivo”, a versão editada também será arquivada.</p>
+    <div id="previa" contenteditable="true" spellcheck="true"></div>
   </section>
 </main>
 
@@ -1380,9 +1391,10 @@ function gerarPrevia(){
   <b>VALOR TOTAL APÓS O ADITIVO:</b> ${novo}<br>
   <b>PERCENTUAL SOBRE O CONTRATO:</b> ${document.getElementById("percentualContrato").textContent}</p>
   ${textoParaHtml(conclusivo)}
-  <p class="doc-p">${escapeHtml(valor("municipio"))}, ${formatarData(valor("data"))}.</p>
+  <p class="doc-p">${escapeHtml(valor("localEmissao") || valor("municipio"))}, ${formatarData(valor("data"))}.</p>
   <div class="assinatura">________________________________________<br>${escapeHtml(valor("representante"))}<br>Representante Legal</div>`;
   document.getElementById("previa").innerHTML = html;
+  document.getElementById("previa").setAttribute("contenteditable","true");
 }
 
 function tabelaPrevia(){
@@ -1496,7 +1508,7 @@ async function gerarDOCX(){
     }));
 
     const doc = new docxLib.Document({
-      creator:"Gerador de Aditivo",
+      creator:"Gerador de Aditivos",
       sections:[{
         properties:{
           page:{
@@ -1706,11 +1718,14 @@ function coletarEstadoAditivo(){
       valorAtual: valor("valorAtual"),
       limite: valor("limite"),
       data: valor("data"),
+      localEmissao: valor("localEmissao"),
+      representante: valor("representante"),
       objeto: valor("objeto"),
       textoIntro: valor("textoIntro"),
-      textoConclusivo: valor("textoConclusivo")
+      textoConclusivo: valor("textoConclusivo"),
+      previaHtml: document.getElementById("previa")?.innerHTML || ""
     },
-    dados: dados,
+    dados: JSON.parse(JSON.stringify(dados)),
     colunasOcultas: Array.from(colunasOcultas)
   };
 }
@@ -1730,6 +1745,8 @@ function aplicarEstadoAditivo(ad){
   if(document.getElementById("valorAtual")) document.getElementById("valorAtual").value = f.valorAtual || "";
   if(document.getElementById("limite")) document.getElementById("limite").value = f.limite || "25";
   if(document.getElementById("data")) document.getElementById("data").value = f.data || "";
+  if(document.getElementById("localEmissao")) document.getElementById("localEmissao").value = f.localEmissao || "";
+  if(document.getElementById("representante")) document.getElementById("representante").value = f.representante || "";
   if(document.getElementById("objeto")) document.getElementById("objeto").value = f.objeto || "";
   if(document.getElementById("textoIntro")) document.getElementById("textoIntro").value = f.textoIntro || "";
   if(document.getElementById("textoConclusivo")) document.getElementById("textoConclusivo").value = f.textoConclusivo || "";
@@ -1741,7 +1758,13 @@ function aplicarEstadoAditivo(ad){
   aplicarLimiteModalidade();
   atualizarTabela();
   calcular();
-  gerarPrevia();
+
+  if(f.previaHtml){
+    document.getElementById("previa").innerHTML = f.previaHtml;
+    document.getElementById("previa").setAttribute("contenteditable","true");
+  } else {
+    gerarPrevia();
+  }
 }
 
 function salvarAditivoAtual(){
@@ -1828,25 +1851,100 @@ function coletarCadastrosLocais(){
   return dadosLocal;
 }
 
+
+function dadosTabelaParaExcel(){
+  const tipo = valor("tipo");
+  const rows = [];
+
+  if(tipo === "realinhamento"){
+    rows.push(["ITEM","DESCRIÇÃO","UNIDADE","QUANTIDADE RESTANTE","PREÇO INICIAL","PREÇO ATUALIZADO","VALOR +/-","SUBTOTAL"]);
+    dados.forEach(d=>{
+      rows.push([
+        d.item || "",
+        d.descricao || "",
+        d.unidade || "",
+        parseNum(d.quantidadeRestante),
+        parseNum(d.precoInicial),
+        parseNum(d.precoAtualizado),
+        parseNum(d.valorDiferenca),
+        parseNum(d.subtotal)
+      ]);
+    });
+  } else {
+    rows.push(["ITEM","DESCRIÇÃO","UNIDADE","QUANTIDADE","PREÇO UNITÁRIO","TIPO","QTD OU %","QTD ADITIVO","QTD FINAL","VALOR ADITIVO"]);
+    dados.forEach(d=>{
+      rows.push([
+        d.item || "",
+        d.descricao || "",
+        d.unidade || "",
+        parseNum(d.quantidade),
+        parseNum(d.precoUnitario),
+        d.tipoAlteracao === "reducao" ? "REDUÇÃO" : "ACRÉSCIMO",
+        d.quantidadeInformada || "",
+        parseNum(d.quantidadeAditivo),
+        parseNum(d.quantidadeFinal),
+        parseNum(d.valorAditivo)
+      ]);
+    });
+  }
+
+  rows.push([]);
+  rows.push(["RESUMO FINANCEIRO"]);
+  rows.push(["Total de acréscimos", document.getElementById("totalAcrescimos").textContent]);
+  rows.push(["Total de reduções", document.getElementById("totalReducoes").textContent]);
+  rows.push(["Saldo final do aditivo", document.getElementById("saldoAditivo").textContent]);
+  rows.push(["Novo valor contratual", document.getElementById("novoValor").textContent]);
+  rows.push(["Percentual sobre o contrato", document.getElementById("percentualContrato").textContent]);
+
+  return rows;
+}
+
+function exportarTabelaExcel(){
+  try{
+    calcular();
+    if(!dados.length){
+      alert("Não há itens para exportar.");
+      return;
+    }
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(dadosTabelaParaExcel());
+    ws["!cols"] = [
+      {wch:10},{wch:45},{wch:12},{wch:18},{wch:16},
+      {wch:16},{wch:16},{wch:16},{wch:16},{wch:16}
+    ];
+    XLSX.utils.book_append_sheet(wb, ws, "Tabela do Aditivo");
+
+    const modalidade = document.getElementById("modalidade")?.value || "aditivo";
+    const numero = document.getElementById("numeroLicitacao")?.value || "";
+    const ano = document.getElementById("anoLicitacao")?.value || "";
+    const nome = `tabela-aditivo-${normal(modalidade)}-${numero || "sem-numero"}-${ano || "sem-ano"}.xlsx`;
+    XLSX.writeFile(wb, nome);
+  }catch(e){
+    console.error(e);
+    alert("Erro ao exportar tabela Excel.");
+  }
+}
+
+
 function exportarBackup(){
   try{
+    montarLicitacao();
+    calcular();
+
     const backup = {
       tipo: "backup-gerador-aditivo",
-      versao: 1,
+      versao: 2,
       geradoEm: new Date().toISOString(),
+
+      // Tudo que estiver salvo no navegador e for usado pelo sistema.
       cadastros: coletarCadastrosLocais(),
       aditivosSalvos: getAditivosSalvos(),
-      formularioAtual: {
-        modalidade: document.getElementById("modalidade")?.value || "",
-        numeroLicitacao: document.getElementById("numeroLicitacao")?.value || "",
-        anoLicitacao: document.getElementById("anoLicitacao")?.value || "",
-        orgao: document.getElementById("orgao")?.value || "",
-        proponente: document.getElementById("proponente")?.value || "",
-        cnpj: document.getElementById("cnpj")?.value || "",
-        valorAtual: document.getElementById("valorAtual")?.value || "",
-        objeto: document.getElementById("objeto")?.value || "",
-        tipoAditivo: document.getElementById("tipo")?.value || ""
-      }
+
+      // Estado atual da tela, mesmo que ainda não tenha sido salvo como aditivo.
+      aditivoAtual: coletarEstadoAditivo(),
+
+      // Compatibilidade com versões anteriores.
+      formularioAtual: coletarEstadoAditivo().formulario
     };
 
     const blob = new Blob([JSON.stringify(backup, null, 2)], {type:"application/json"});
@@ -1863,9 +1961,11 @@ function exportarBackup(){
       a.remove();
     }, 1000);
   }catch(e){
+    console.error(e);
     alert("Não foi possível exportar o backup.");
   }
 }
+
 
 function importarBackup(event){
   const file = event.target.files && event.target.files[0];
@@ -1894,10 +1994,11 @@ function importarBackup(event){
 
       if(Array.isArray(backup.aditivosSalvos)){
         setAditivosSalvos(backup.aditivosSalvos);
-        renderizarListaAditivos();
       }
 
-      if(backup.formularioAtual){
+      if(backup.aditivoAtual && backup.aditivoAtual.formulario){
+        aplicarEstadoAditivo(backup.aditivoAtual);
+      } else if(backup.formularioAtual){
         const f = backup.formularioAtual;
 
         if(document.getElementById("modalidade") && f.modalidade) document.getElementById("modalidade").value = f.modalidade;
@@ -1907,17 +2008,21 @@ function importarBackup(event){
         if(document.getElementById("proponente")) document.getElementById("proponente").value = f.proponente || "";
         if(document.getElementById("cnpj")) document.getElementById("cnpj").value = f.cnpj || "";
         if(document.getElementById("valorAtual")) document.getElementById("valorAtual").value = f.valorAtual || "";
+        if(document.getElementById("localEmissao")) document.getElementById("localEmissao").value = f.localEmissao || "";
+        if(document.getElementById("representante")) document.getElementById("representante").value = f.representante || "";
         if(document.getElementById("objeto")) document.getElementById("objeto").value = f.objeto || "";
         if(document.getElementById("tipo") && f.tipoAditivo) document.getElementById("tipo").value = f.tipoAditivo;
+        montarLicitacao();
+        aplicarLimiteModalidade();
+        atualizarTextosPadrao();
+        calcular();
       }
 
-      montarLicitacao();
-      aplicarLimiteModalidade();
-      atualizarTextosPadrao();
-      calcular();
-
-      alert("Backup importado com sucesso.");
+      renderizarListaAditivos();
+      mostrarApp();
+      alert("Backup importado com sucesso. Todas as informações salvas foram recuperadas.");
     }catch(err){
+      console.error(err);
       alert("Erro ao importar backup. Verifique se o arquivo é um JSON válido.");
     }finally{
       event.target.value = "";
